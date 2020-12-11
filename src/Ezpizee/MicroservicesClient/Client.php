@@ -1,6 +1,8 @@
 <?php
 
-namespace Ezpizee\MicroserviceClient;
+namespace Ezpizee\MicroservicesClient;
+
+use Unirest\Request;
 
 class Client
 {
@@ -12,12 +14,24 @@ class Client
   private $host;
   private $method;
   private $methods = ['get'=>'GET','post'=>'POST','delete'=>'DELETE','patch'=>'PATCH'];
+  private $headers = [];
 
   public function __construct(string $schema, string $host, Config $config)
   {
     $this->config = $config;
     $this->schema = $schema;
     $this->host = $host;
+  }
+
+  public function addHeader(string $key, string $val): void {$this->headers[$key] = $val;}
+  public function addHeaders(array $headers): void {
+    if (!empty($headers)) {
+      foreach ($headers as $key=>$val) {
+        if (!is_numeric($key)) {
+          $this->addHeader($key, $val);
+        }
+      }
+    }
   }
 
   public function get(string $uri): Response {
@@ -46,6 +60,8 @@ class Client
 
     switch ($this->method) {
       case $this->methods['get']:
+        $unirestRequest = Request::get($url);
+        $response->setUnirestResponse($unirestRequest->raw_body);
         break;
       case $this->methods['post']:
         break;
@@ -58,7 +74,10 @@ class Client
     return $response;
   }
 
-  private function setBaseHeaders(): void {}
+  private function setBaseHeaders(): void {
+    $ctype = $this->config->get('content-type', 'application/json');
+    $this->addHeader('content-type', $ctype);
+  }
 
   private function url(string $uri): string {return $this->schema.$this->host.$uri;}
 }

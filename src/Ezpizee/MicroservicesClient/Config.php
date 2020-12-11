@@ -1,6 +1,6 @@
 <?php
 
-namespace Ezpizee\MicroserviceClient;
+namespace Ezpizee\MicroservicesClient;
 
 use Ezpizee\Utils\ListModel;
 
