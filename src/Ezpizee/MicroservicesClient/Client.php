@@ -23,6 +23,7 @@ class Client
     $this->config = $config;
     $this->schema = $schema;
     $this->host = $host;
+    $this->setHeaderBase();
   }
 
   public function addHeader(string $key, string $val): void
@@ -40,7 +41,7 @@ class Client
     }
   }
 
-  public function get(string $uri, array $params): Response
+  public function get(string $uri, array $params = []): Response
   {
     $this->method = $this->methods['get'];
     $this->body = $params;
@@ -124,7 +125,7 @@ class Client
   {
     if (!isset($_COOKIE['token'])) {
       $tokenUri = $this->config->get('token_uri');
-      $response = Request::post($this->url($tokenUri), $this->headers, null, $this->config->get('username'), $this->config->get('password'));
+      $response = Request::post($this->url($tokenUri), $this->headers, null, $this->config->get('client_id'), $this->config->get('client_secret'));
       if (
         isset($response->body->data)
         && isset($response->body->data->AuthorizationBearerToken)
@@ -136,5 +137,10 @@ class Client
     } else {
       $this->addHeader('Authorization', 'Bearer ' . $_COOKIE['token']);
     }
+  }
+
+  private function setHeaderBase(): void
+  {
+    $this->addHeader('App-Name', 'My Electron App Demo');
   }
 }
