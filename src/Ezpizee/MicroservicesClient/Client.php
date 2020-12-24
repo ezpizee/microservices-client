@@ -2,6 +2,7 @@
 
 namespace Ezpizee\MicroservicesClient;
 
+use RuntimeException;
 use Unirest\Request;
 
 class Client
@@ -20,10 +21,15 @@ class Client
 
   public function __construct(string $schema, string $host, Config $config)
   {
-    $this->config = $config;
-    $this->schema = $schema;
-    $this->host = $host;
-    $this->setHeaderBase();
+    if ($config->isValid()) {
+      $this->config = $config;
+      $this->schema = $schema;
+      $this->host = $host;
+      $this->setHeaderBase();
+    }
+    else {
+      throw new RuntimeException('Invalid microservices config', 422);
+    }
   }
 
   public function addHeader(string $key, string $val): void
