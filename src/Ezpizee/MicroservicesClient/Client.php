@@ -110,7 +110,7 @@ class Client
         $response->setUnirestResponse($unirestRequest->raw_body);
         break;
       case $this->methods['put']:
-        $unirestRequest = Request::delete($url, $this->headers, $this->body);
+        $unirestRequest = Request::put($url, $this->headers, $this->body);
         $response->setUnirestResponse($unirestRequest->raw_body);
         break;
       case $this->methods['patch']:
