@@ -43,14 +43,11 @@ class Client
     }
   }
 
-  public function hasHeader(string $key): bool {return isset($this->headers[$key]);}
-
-  public function getConfig(string $key, $default=null) {return $this->config->get($key, $default);}
-
   public function addHeader(string $key, string $val): void
   {
     $this->headers[$key] = $val;
   }
+
   public function addHeaders(array $headers): void
   {
     if (!empty($headers)) {
@@ -105,6 +102,14 @@ class Client
     return $this->request($this->url($uri));
   }
 
+  protected function getHeaders(): array {return $this->headers;}
+  protected function getConfig(string $key, $default=null) {return $this->config->get($key, $default);}
+  protected function hasHeader(string $key): bool {return isset($this->headers[$key]);}
+  protected function url(string $uri): string
+  {
+    return $this->schema . str_replace('//', '/', $this->host . ($uri&&$uri[0]==='/'?'':'/') . $uri);
+  }
+
   private function request(string $url): Response
   {
     $this->requestToken();
@@ -137,26 +142,23 @@ class Client
     return $response;
   }
 
-  private function url(string $uri): string
-  {
-    return $this->schema . str_replace('//', '/', $this->host . ($uri&&$uri[0]==='/'?'':'/') . $uri);
-  }
-
   private function requestToken(): void
   {
-    if (!isset($_COOKIE['token'])) {
-      $tokenUri = $this->config->get('token_uri');
-      $response = Request::post($this->url($tokenUri), $this->headers, null, $this->config->get('client_id'), $this->config->get('client_secret'));
-      if (
-        isset($response->body->data)
-        && isset($response->body->data->AuthorizationBearerToken)
-        && isset($response->body->data->expire_in)
-      ) {
-        setcookie('token', $response->body->data->AuthorizationBearerToken, time() + ($response->body->data->expire_in - (10 * 60 * 1000)), "/");
-        $this->addHeader('Authorization', 'Bearer ' . $response->body->data->AuthorizationBearerToken);
+    if (!$this->hasHeader('Authorization')) {
+      if (!isset($_COOKIE['token'])) {
+        $tokenUri = $this->config->get('token_uri');
+        $response = Request::post($this->url($tokenUri), $this->headers, null, $this->config->get('client_id'), $this->config->get('client_secret'));
+        if (
+          isset($response->body->data)
+          && isset($response->body->data->AuthorizationBearerToken)
+          && isset($response->body->data->expire_in)
+        ) {
+          setcookie('token', $response->body->data->AuthorizationBearerToken, time() + ($response->body->data->expire_in - (10 * 60 * 1000)), "/");
+          $this->addHeader('Authorization', 'Bearer ' . $response->body->data->AuthorizationBearerToken);
+        }
+      } else {
+        $this->addHeader('Authorization', 'Bearer ' . $_COOKIE['token']);
       }
-    } else {
-      $this->addHeader('Authorization', 'Bearer ' . $_COOKIE['token']);
     }
   }
 
