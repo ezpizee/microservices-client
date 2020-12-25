@@ -11,13 +11,24 @@ class Client
    * @var Config
    */
   private $config;
+  /**
+   * @var string http:// or https://
+   */
   private $schema;
+  /**
+   * @var string domain, subdomain, domain:port, or subdomain:port
+   */
   private $host;
   private $method;
   private $methods = ['get' => 'GET', 'post' => 'POST', 'delete' => 'DELETE', 'patch' => 'PATCH'];
   private $headers = [];
   private $body;
   private $isFormData = false;
+
+  public static function getContentAsString(string $url): string {
+    Request::verifyPeer(false);
+    return Request::get($url)->raw_body;
+  }
 
   public function __construct(string $schema, string $host, Config $config)
   {
@@ -124,7 +135,7 @@ class Client
 
   private function url(string $uri): string
   {
-    return $this->schema . $this->host . $uri;
+    return $this->schema . str_replace('//', '/', $this->host . ($uri&&$uri[0]==='/'?'':'/') . $uri);
   }
 
   private function requestToken(): void
