@@ -43,6 +43,10 @@ class Client
     }
   }
 
+  public function hasHeader(string $key): bool {return isset($this->headers[$key]);}
+
+  public function getConfig(string $key, $default=null) {return $this->config->get($key, $default);}
+
   public function addHeader(string $key, string $val): void
   {
     $this->headers[$key] = $val;
