@@ -220,8 +220,6 @@ class Client
           $this->getConfig(self::KEY_CLIENT_ID),
           $this->getConfig(self::KEY_CLIENT_SECRET)
         );
-        // TODO: wrong app name
-        die($this->config);
         if (isset($response->body->data)
           && isset($response->body->data->AuthorizationBearerToken)
           && isset($response->body->data->expire_in)) {
