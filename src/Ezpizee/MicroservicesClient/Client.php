@@ -2,6 +2,7 @@
 
 namespace Ezpizee\MicroservicesClient;
 
+use Ezpizee\Utils\Logger;
 use RuntimeException;
 use Unirest\Request;
 
@@ -176,6 +177,8 @@ class Client
     private function request(string $url): Response
     {
         $this->setBaseHeaders();
+
+        Logger::debug('API CALL: '.$this->method.' '.$url.(isset($_SERVER['HTTP_REFERER'])?'; refererer: '.$_SERVER['HTTP_REFERER']:''));
 
         $response = new Response([]);
 
