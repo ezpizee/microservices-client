@@ -49,7 +49,6 @@ class Client
     private $methods = ['get' => 'GET', 'post' => 'POST', 'delete' => 'DELETE', 'patch' => 'PATCH'];
     private $headers = [];
     private $body;
-    private $isFormData = false;
 
     public static function verifyPeer(bool $b): void
     {
@@ -115,8 +114,8 @@ class Client
     public function postFormData(string $uri, array $body = []): Response
     {
         $this->method = $this->methods['post'];
-        $this->body = $body;
-        $this->isFormData = true;
+        $this->body = Request\Body::multipart($body);
+        $this->setMultipart(true);
         return $this->request($this->url($uri));
     }
 
@@ -186,7 +185,6 @@ class Client
                 $response->setUnirestResponse($unirestRequest->raw_body);
                 break;
             case $this->methods['post']:
-                if ($this->isFormData) $this->body = Request\Body::multipart($this->body);
                 $unirestRequest = Request::post($url, $this->headers, $this->body);
                 $response->setUnirestResponse($unirestRequest->raw_body);
                 break;
