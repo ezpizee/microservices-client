@@ -1,7 +1,7 @@
 {
     "name": "ezpizee/microservices-client",
     "description": "For connecting to our microservices (likely using Kong's unirest)",
-    "homepage": "https://github.com/WEBCONSOL/microservices-client",
+    "homepage": "https://github.com/ezpizee/microservices-client",
     "type": "library",
     "minimum-stability": "dev",
     "prefer-stable": true,
