@@ -3,6 +3,7 @@
 namespace Ezpizee\MicroservicesClient;
 
 use Ezpizee\Utils\Logger;
+use Ezpizee\Utils\StringUtil;
 use RuntimeException;
 use Unirest\Request;
 
@@ -52,6 +53,7 @@ class Client
     private $body;
     private static $ignorePeerValidation = false;
     private $tokenHandler = null;
+    private $refreshToken = false;
 
     public function __construct(string $schema, string $host, Config $config, $tokenHandler)
     {
@@ -74,6 +76,8 @@ class Client
         }
         return Request::get($url)->raw_body;
     }
+
+    public function setRefreshToken(bool $b): void {$this->refreshToken = $b;}
 
     public function addHeader(string $key, string $val): void
     {
@@ -223,6 +227,22 @@ class Client
                 break;
         }
 
+        if ($this->refreshToken && $response->hasElement() && !empty($response->getData())) {
+            $key = '';
+            foreach ($_COOKIE as $k=>$v) {
+                if (StringUtil::startsWith($v, 'ezpz_token_handler_')) {
+                    $key = $v;
+                }
+            }
+            if ($key) {
+                $tokenHandler = $this->tokenHandler;
+                $tokenHandler = new $tokenHandler($key);
+                if ($tokenHandler instanceof TokenHandlerInterface) {
+                    $tokenHandler->keepToken(new Token($response->getData()));
+                }
+            }
+        }
+
         return $response;
     }
 
@@ -267,8 +287,8 @@ class Client
                     && isset($response->body->data->AuthorizationBearerToken)
                     && isset($response->body->data->expire_in)) {
 
-                    $key = uniqid($tokenKey.'_handler');
-                    $expire = time() + ($response->body->data->expire_in - (10 * 60 * 1000));
+                    $key = uniqid('ezpz_token_handler_');
+                    $expire = 0;
                     setcookie($tokenKey, $key, $expire, "/");
 
                     $tokenHandler = $this->tokenHandler;

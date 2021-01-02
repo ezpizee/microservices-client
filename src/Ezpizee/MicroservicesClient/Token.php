@@ -16,13 +16,13 @@ class Token
     public function __construct(array $data)
     {
         $this->sessionId = isset($data['Session-Id']) ? $data['Session-Id'] : '';
-        $this->tokenUUID = isset($data['Session-Id']) ? $data['Session-Id'] : '';
-        $this->grantType = isset($data['Session-Id']) ? $data['Session-Id'] : '';
+        $this->tokenUUID = isset($data['token_uuid']) ? $data['token_uuid'] : '';
+        $this->grantType = isset($data['grant_type']) ? $data['grant_type'] : '';
         $this->tokenParamName = isset($data['token_param_name']) ? $data['token_param_name'] : '';
         $this->authorizationBearerToken = isset($data[$this->tokenParamName]) ? $data[$this->tokenParamName] : '';
-        $this->expireIn = isset($data['Session-Id']) ? $data['expire_in'] : 0;
-        $this->roles = isset($data['Session-Id']) ? $data['roles'] : [];
-        $this->user = isset($data['Session-Id']) ? $data['user'] : [];
+        $this->expireIn = isset($data['expire_in']) ? $data['expire_in'] : 0;
+        $this->roles = isset($data['roles']) ? $data['roles'] : [];
+        $this->user = isset($data['user']) ? $data['user'] : [];
     }
 
     public function getSessionId(): string {return $this->sessionId;}
