@@ -51,6 +51,19 @@ class Client
     private $headers = [];
     private $body;
     private static $ignorePeerValidation = false;
+    private $tokenHandler = null;
+
+    public function __construct(string $schema, string $host, Config $config, $tokenHandler)
+    {
+        if ($config->isValid()) {
+            $this->config = $config;
+            $this->schema = $schema;
+            $this->host = $host;
+            $this->tokenHandler = $tokenHandler;
+        } else {
+            throw new RuntimeException('Invalid microservices config', 422);
+        }
+    }
 
     public static function setIgnorePeerValidation(bool $b): void {self::$ignorePeerValidation = $b;}
 
@@ -60,17 +73,6 @@ class Client
             self::verifyPeer(!self::$ignorePeerValidation);
         }
         return Request::get($url)->raw_body;
-    }
-
-    public function __construct(string $schema, string $host, Config $config)
-    {
-        if ($config->isValid()) {
-            $this->config = $config;
-            $this->schema = $schema;
-            $this->host = $host;
-        } else {
-            throw new RuntimeException('Invalid microservices config', 422);
-        }
     }
 
     public function addHeader(string $key, string $val): void
@@ -137,9 +139,17 @@ class Client
         return $this->config->get($key, $default);
     }
 
-    public function getExpireIn(string $tokeyKey): string
+    public function getToken(string $tokenKey): Token
     {
-        return isset($_COOKIE[$tokeyKey . '_ei']) ? $_COOKIE[$tokeyKey . '_ei'] : '0';
+        if (isset($_COOKIE[$tokenKey])) {
+            $key = $_COOKIE[$tokenKey];
+            $tokenHandler = $this->tokenHandler;
+            $tokenHandler = new $tokenHandler($key);
+            if ($tokenHandler instanceof TokenHandlerInterface) {
+                return $tokenHandler->getToken();
+            }
+        }
+        return new Token([]);
     }
 
     public function setMultipart(bool $b): void
@@ -256,13 +266,30 @@ class Client
                 if (isset($response->body->data)
                     && isset($response->body->data->AuthorizationBearerToken)
                     && isset($response->body->data->expire_in)) {
+
+                    $key = uniqid($tokenKey.'_handler');
                     $expire = time() + ($response->body->data->expire_in - (10 * 60 * 1000));
-                    setcookie($tokenKey, $response->body->data->AuthorizationBearerToken, $expire, "/");
-                    setcookie($tokenKey . '_ei', $response->body->data->expire_in, $expire, "/");
+                    setcookie($tokenKey, $key, $expire, "/");
+
+                    $tokenHandler = $this->tokenHandler;
+                    $tokenHandler = new $tokenHandler($key);
+                    if ($tokenHandler instanceof TokenHandlerInterface) {
+                        $tokenHandler->keepToken(new Token(json_decode(json_encode($response->body->data), true)));
+                    }
+
                     $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Bearer ' . $response->body->data->AuthorizationBearerToken);
                 }
-            } else {
-                $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Bearer ' . $_COOKIE[$tokenKey]);
+            }
+            else {
+                $key = $_COOKIE[$tokenKey];
+                $tokenHandler = $this->tokenHandler;
+                $tokenHandler = new $tokenHandler($key);
+                if ($tokenHandler instanceof TokenHandlerInterface) {
+                    $token = $tokenHandler->getToken();
+                    if ($token instanceof Token) {
+                        $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Bearer ' . $token->getAuthorizationBearerToken());
+                    }
+                }
             }
         }
     }
