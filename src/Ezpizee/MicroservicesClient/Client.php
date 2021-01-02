@@ -50,16 +50,14 @@ class Client
     private $methods = ['get' => 'GET', 'post' => 'POST', 'delete' => 'DELETE', 'patch' => 'PATCH'];
     private $headers = [];
     private $body;
+    private static $ignorePeerValidation = false;
 
-    public static function verifyPeer(bool $b): void
-    {
-        Request::verifyPeer($b);
-    }
+    public static function setIgnorePeerValidation(bool $b): void {self::$ignorePeerValidation = $b;}
 
-    public static function getContentAsString(string $url, bool $ignoreSSLValidation=false): string
+    public static function getContentAsString(string $url): string
     {
-        if ($ignoreSSLValidation) {
-            self::verifyPeer(false);
+        if (self::$ignorePeerValidation) {
+            self::verifyPeer(!self::$ignorePeerValidation);
         }
         return Request::get($url)->raw_body;
     }
@@ -174,9 +172,19 @@ class Client
         return $this->schema . str_replace('//', '/', $this->host . ($uri && $uri[0] === '/' ? '' : '/') . $uri);
     }
 
+    protected static function verifyPeer(bool $b): void
+    {
+        Request::verifyPeer($b);
+        Request::verifyHost($b);
+    }
+
     private function request(string $url): Response
     {
         $this->setBaseHeaders();
+
+        if (self::$ignorePeerValidation) {
+            self::verifyPeer(!self::$ignorePeerValidation);
+        }
 
         Logger::debug('API CALL: '.$this->method.' '.$url.(isset($_SERVER['HTTP_REFERER'])?'; refererer: '.$_SERVER['HTTP_REFERER']:''));
 
