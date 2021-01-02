@@ -99,7 +99,7 @@ class Client
     public function post(string $uri, array $body): Response
     {
         $this->method = $this->methods['post'];
-        $this->body = $body;
+        $this->body = json_encode($body);
         return $this->request($this->url($uri));
     }
 
