@@ -275,7 +275,22 @@ class Client
     private function fetchBearerToken(string $tokenKey): void
     {
         if (!$this->hasHeader(self::HEADER_PARAM_ACCESS_TOKEN) && $this->config->has(self::KEY_TOKEN_URI)) {
-            if (!isset($_COOKIE[$tokenKey])) {
+            $token = null;
+            $tokenHandler = $this->tokenHandler;
+            if (isset($_COOKIE[$tokenKey])) {
+                $key = $_COOKIE[$tokenKey];
+                $tokenHandler = new $tokenHandler($key);
+                if ($tokenHandler instanceof TokenHandlerInterface) {
+                    $token = $tokenHandler->getToken();
+                    if ($token instanceof Token && $token->getAuthorizationBearerToken()) {
+                        $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Bearer ' . $token->getAuthorizationBearerToken());
+                    }
+                    else {
+                        $token = null;
+                    }
+                }
+            }
+            if (empty($token)) {
                 $response = Request::post(
                     $this->url($this->getConfig(self::KEY_TOKEN_URI)),
                     $this->getHeaders(),
@@ -288,27 +303,19 @@ class Client
                     && isset($response->body->data->expire_in)) {
 
                     $key = uniqid('ezpz_token_handler_');
-                    $expire = 0;
-                    setcookie($tokenKey, $key, $expire, "/");
-
-                    $tokenHandler = $this->tokenHandler;
                     $tokenHandler = new $tokenHandler($key);
                     if ($tokenHandler instanceof TokenHandlerInterface) {
+                        $expire = 0;
+                        if (method_exists($tokenHandler, 'setCookie')) {
+                            $tokenHandler->setCookie($tokenKey, $key, $expire, '/');
+                        }
+                        else {
+                            setcookie($tokenKey, $key, $expire, "/");
+                        }
                         $tokenHandler->keepToken(new Token(json_decode(json_encode($response->body->data), true)));
                     }
 
                     $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Bearer ' . $response->body->data->AuthorizationBearerToken);
-                }
-            }
-            else {
-                $key = $_COOKIE[$tokenKey];
-                $tokenHandler = $this->tokenHandler;
-                $tokenHandler = new $tokenHandler($key);
-                if ($tokenHandler instanceof TokenHandlerInterface) {
-                    $token = $tokenHandler->getToken();
-                    if ($token instanceof Token) {
-                        $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Bearer ' . $token->getAuthorizationBearerToken());
-                    }
                 }
             }
         }
