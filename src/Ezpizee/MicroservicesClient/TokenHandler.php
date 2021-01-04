@@ -11,13 +11,15 @@ class TokenHandler implements TokenHandlerInterface
         $this->key = $key;
     }
 
-    public function keepToken(Token $token): void {
+    public function keepToken(Token $token): void
+    {
         if ($this->key && isset($_SESSION)) {
             $_SESSION[$this->key] = $token;
         }
     }
 
-    public function getToken(): Token {
+    public function getToken(): Token
+    {
         if ($this->key && isset($_SESSION)) {
             $token = $_SESSION[$this->key];
             if ($token instanceof Token) {
@@ -25,5 +27,10 @@ class TokenHandler implements TokenHandlerInterface
             }
         }
         return new Token([]);
+    }
+
+    public function setCookie(string $name, string $value, int $expire = 0, string $path = '/')
+    {
+        setcookie($name, $value, $expire, $path);
     }
 }

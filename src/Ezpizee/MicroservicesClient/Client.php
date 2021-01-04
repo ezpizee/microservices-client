@@ -31,6 +31,8 @@ class Client
     const HEADER_VALUE_OS_PLATFORM_VERSION = "Unknown";
     const HEADER_LANGUAGE_TAG = "Language-Tag";
 
+    const SESSION_COOKIE_VALUE_PFX = "ezpz_token_handler_";
+
     private $isMultipart = false;
     private $platform = '';
     private $platformVersion = '';
@@ -274,10 +276,13 @@ class Client
 
     private function fetchBearerToken(string $tokenKey): void
     {
-        if (!$this->hasHeader(self::HEADER_PARAM_ACCESS_TOKEN) && $this->config->has(self::KEY_TOKEN_URI)) {
+        if (!$this->hasHeader(self::HEADER_PARAM_ACCESS_TOKEN) && $this->config->has(self::KEY_TOKEN_URI))
+        {
             $token = null;
             $tokenHandler = $this->tokenHandler;
-            if (isset($_COOKIE[$tokenKey])) {
+
+            if (isset($_COOKIE[$tokenKey]))
+            {
                 $key = $_COOKIE[$tokenKey];
                 $tokenHandler = new $tokenHandler($key);
                 if ($tokenHandler instanceof TokenHandlerInterface) {
@@ -290,28 +295,25 @@ class Client
                     }
                 }
             }
-            if (empty($token)) {
-                $response = Request::post(
-                    $this->url($this->getConfig(self::KEY_TOKEN_URI)),
-                    $this->getHeaders(),
-                    null,
-                    $this->getConfig(self::KEY_CLIENT_ID),
-                    $this->getConfig(self::KEY_CLIENT_SECRET)
-                );
+
+            if (empty($token))
+            {
+                $url = $this->url($this->getConfig(self::KEY_TOKEN_URI));
+                $user = $this->getConfig(self::KEY_CLIENT_ID);
+                $password = $this->getConfig(self::KEY_CLIENT_SECRET);
+
+                Logger::debug("API Call: POST ".$url);
+
+                $response = Request::post($url, $this->getHeaders(), null, $user, $password);
+
                 if (isset($response->body->data)
                     && isset($response->body->data->AuthorizationBearerToken)
-                    && isset($response->body->data->expire_in)) {
-
-                    $key = uniqid('ezpz_token_handler_');
+                    && isset($response->body->data->expire_in))
+                {
+                    $cookieVal = uniqid(self::SESSION_COOKIE_VALUE_PFX);
                     $tokenHandler = new $tokenHandler($key);
                     if ($tokenHandler instanceof TokenHandlerInterface) {
-                        $expire = 0;
-                        if (method_exists($tokenHandler, 'setCookie')) {
-                            $tokenHandler->setCookie($tokenKey, $key, $expire, '/');
-                        }
-                        else {
-                            setcookie($tokenKey, $key, $expire, "/");
-                        }
+                        $tokenHandler->setCookie($tokenKey, $cookieVal);
                         $tokenHandler->keepToken(new Token(json_decode(json_encode($response->body->data), true)));
                     }
 

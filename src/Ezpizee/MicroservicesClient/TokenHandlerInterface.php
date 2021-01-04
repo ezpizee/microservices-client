@@ -9,4 +9,6 @@ interface TokenHandlerInterface
     public function keepToken(Token $token): void;
 
     public function getToken(): Token;
+
+    public function setCookie(string $name, string $value, int $expire=0, string $path='/');
 }
