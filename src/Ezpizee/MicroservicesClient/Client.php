@@ -283,8 +283,8 @@ class Client
 
             if (isset($_COOKIE[$tokenKey]))
             {
-                $key = $_COOKIE[$tokenKey];
-                $tokenHandler = new $tokenHandler($key);
+                $cookieVal = $_COOKIE[$tokenKey];
+                $tokenHandler = new $tokenHandler($cookieVal);
                 if ($tokenHandler instanceof TokenHandlerInterface) {
                     $token = $tokenHandler->getToken();
                     if ($token instanceof Token && $token->getAuthorizationBearerToken()) {
@@ -302,7 +302,7 @@ class Client
                 $user = $this->getConfig(self::KEY_CLIENT_ID);
                 $password = $this->getConfig(self::KEY_CLIENT_SECRET);
 
-                Logger::debug("API Call: POST ".$url);
+                Logger::debug("Get-Token: ".$url);
 
                 $response = Request::post($url, $this->getHeaders(), null, $user, $password);
 
@@ -311,7 +311,7 @@ class Client
                     && isset($response->body->data->expire_in))
                 {
                     $cookieVal = uniqid(self::SESSION_COOKIE_VALUE_PFX);
-                    $tokenHandler = new $tokenHandler($key);
+                    $tokenHandler = new $tokenHandler($cookieVal);
                     if ($tokenHandler instanceof TokenHandlerInterface) {
                         $tokenHandler->setCookie($tokenKey, $cookieVal);
                         $tokenHandler->keepToken(new Token(json_decode(json_encode($response->body->data), true)));

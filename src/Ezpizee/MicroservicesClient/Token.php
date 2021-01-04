@@ -6,38 +6,38 @@ use JsonSerializable;
 
 class Token implements JsonSerializable
 {
+    private $sessionId = '';
+    private $tokenUUID = '';
+    private $grantType = '';
+    private $tokenParamName = '';
+    private $authorizationBearerToken = '';
+    private $expireIn = 0;
+    private $roles =[];
+    private $user = [];
     private $data = [];
-    private $keys = [
-        'session_id'=>'Session-Id', 'token_uuid'=>'token_uuid',
-        'grant_type' => 'grant_type', 'token_param_name'=>'token_param_name',
-        'expire_in' => 'expire_in',
-        'roles' => 'roles', 'user' => 'user'
-    ];
 
-    public function __construct(array $data) {$this->data = $data;}
-
-    public function getSessionId(): string {return $this->_get($this->keys['session_id'], '');}
-    public function getTokenUUID(): string {return $this->_get($this->keys['token_uuid'], '');}
-    public function getGrantType(): string {return $this->_get($this->keys['grant_type'], '');}
-    public function getTokenParamName(): string {return $this->_get($this->keys['token_param_name'], '');}
-    public function getAuthorizationBearerToken(): string {
-        return $this->_get($this->_get($this->keys['token_param_name'], 'AuthorizationBearerToken'), '');
-    }
-    public function getExpireIn(): int {return $this->_get($this->keys['expire_in'], 0);}
-    public function getRoles(): array {return $this->_get($this->keys['roles'], []);}
-    public function getUser(string $key='') {
-        $user = $this->_get($this->keys['user'], []);
-        if (!empty($key)) {
-            if (isset($user[$key])) {
-                return $user[$key];
-            }
-        }
-        return $user;
+    public function __construct(array $data)
+    {
+        $this->data = $data;
+        $this->sessionId = isset($data['Session-Id']) ? $data['Session-Id'] : '';
+        $this->tokenUUID = isset($data['token_uuid']) ? $data['token_uuid'] : '';
+        $this->grantType = isset($data['grant_type']) ? $data['grant_type'] : '';
+        $this->tokenParamName = isset($data['token_param_name']) ? $data['token_param_name'] : '';
+        $this->authorizationBearerToken = isset($data[$this->tokenParamName]) ? $data[$this->tokenParamName] : '';
+        $this->expireIn = isset($data['expire_in']) ? $data['expire_in'] : 0;
+        $this->roles = isset($data['roles']) ? $data['roles'] : [];
+        $this->user = isset($data['user']) ? $data['user'] : [];
     }
 
-    private function _get($k, $v) {return isset($this->data[$k]) ? $this->data[$k] : $v;}
+    public function getSessionId(): string {return $this->sessionId;}
+    public function getTokenUUID(): string {return $this->tokenUUID;}
+    public function getGrantType(): string {return $this->grantType;}
+    public function getTokenParamName(): string {return $this->tokenParamName;}
+    public function getAuthorizationBearerToken(): string {return $this->authorizationBearerToken;}
+    public function getExpireIn(): int {return $this->expireIn;}
+    public function getRoles(): array {return $this->roles;}
+    public function getUser(string $key='') {return !empty($key) ? (isset($this->user[$key]) ? $this->user[$key] : null) : ($this->user[$key]);}
 
     public function jsonSerialize(): array {return $this->data;}
-
-    public function __toString(): string {return json_encode($this->jsonSerialize());}
+    public function __toString(): string {return json_encode($this->data);}
 }
