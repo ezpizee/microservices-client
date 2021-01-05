@@ -17,6 +17,7 @@ class Client
   const KEY_APP_NAME = 'app_name';
   const KEY_ENV = 'env';
   const KEY_TOKEN_URI = 'token_uri';
+  const DEFAULT_ACCESS_TOKEN_VALUE = "ezpz_token";
   const HEADER_PARAM_ACCEPT = "Accept";
   const HEADER_PARAM_CTYPE = "Content-Type";
   const HEADER_PARAM_ACCESS_TOKEN = "Authorization";
@@ -159,7 +160,7 @@ class Client
       $response->getCode() === ResponseCodes::CODE_ERROR_INVALID_TOKEN &&
       $response->getMessage() === ResponseCodes::MESSAGE_ERROR_INVALID_TOKEN) {
       if ($this->countTokenRequestNumber < 3) {
-        $this->fetchBearerToken($this->getConfig(self::KEY_ACCESS_TOKEN, 'ezpz_token'));
+        $this->fetchBearerToken($this->getConfig(self::KEY_ACCESS_TOKEN, self::DEFAULT_ACCESS_TOKEN_VALUE));
         $this->request($url);
       }
     }
@@ -191,7 +192,7 @@ class Client
     if (!$this->hasHeader(self::HEADER_PARAM_APP_NAME) && $this->getConfig(self::KEY_APP_NAME)) {
       $this->addHeader(self::HEADER_PARAM_APP_NAME, $this->getConfig(self::KEY_APP_NAME));
     }
-    $this->fetchBearerToken($this->getConfig(self::KEY_ACCESS_TOKEN, 'ezpz_token'));
+    $this->fetchBearerToken($this->getConfig(self::KEY_ACCESS_TOKEN, self::DEFAULT_ACCESS_TOKEN_VALUE));
   }
 
   protected function hasHeader(string $key)
