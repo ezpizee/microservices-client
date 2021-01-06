@@ -251,7 +251,7 @@ class Client
           $tokenHandler = new $tokenHandler($cookieVal);
           if ($tokenHandler instanceof TokenHandlerInterface) {
             $this->countTokenRequestNumber = 0;
-            $expire = Constants::ACCESS_TOKEN_TLS_VALUE - 5 * 60 * 1000;
+            $expire = (time() + Constants::ACCESS_TOKEN_TLS_VALUE) - (5 * 60 * 1000);
             $tokenHandler->setCookie($tokenKey, $cookieVal, $expire);
             $tokenHandler->keepToken(new Token(json_decode(json_encode($response->body->data), true)));
           }
