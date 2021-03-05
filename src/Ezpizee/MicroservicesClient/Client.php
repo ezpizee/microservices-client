@@ -15,6 +15,7 @@ class Client
     const KEY_CLIENT_ID = 'client_id';
     const KEY_CLIENT_SECRET = 'client_secret';
     const KEY_APP_NAME = 'app_name';
+    const KEY_BEARER = 'bearer_token';
     const KEY_ENV = 'env';
     const KEY_TOKEN_URI = 'token_uri';
     const DEFAULT_ACCESS_TOKEN_VALUE = "ezpz_token";
@@ -64,6 +65,9 @@ class Client
             $this->schema = $schema;
             $this->host = $host;
             $this->tokenHandler = $tokenHandler;
+            if ($config->has(self::KEY_BEARER)) {
+                $this->addBearerTokenHeader($config->get(self::KEY_BEARER));
+            }
         }
         else {
             throw new RuntimeException('Invalid microservices config', 422);
@@ -215,18 +219,20 @@ class Client
     private function fetchBearerToken(string $tokenKey)
     : void
     {
-        if (!$this->hasHeader(self::HEADER_PARAM_ACCESS_TOKEN) && $this->config->has(self::KEY_TOKEN_URI)) {
+        if (!$this->hasHeader(self::HEADER_PARAM_ACCESS_TOKEN) &&
+            !$this->config->has(self::KEY_BEARER) &&
+            $this->config->has(self::KEY_TOKEN_URI)) {
             $token = null;
             $tokenHandler = $this->tokenHandler;
             $this->countTokenRequestNumber++;
 
-            if (isset($_COOKIE[$tokenKey])) {
+            if (isset($_COOKIE) && !empty($_COOKIE) && isset($_COOKIE[$tokenKey])) {
                 $cookieVal = $_COOKIE[$tokenKey];
                 $tokenHandler = new $tokenHandler($cookieVal);
                 if ($tokenHandler instanceof TokenHandlerInterface) {
                     $token = $tokenHandler->getToken();
                     if ($token instanceof Token && $token->getAuthorizationBearerToken()) {
-                        $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Bearer ' . $token->getAuthorizationBearerToken());
+                        $this->addBearerTokenHeader($token->getAuthorizationBearerToken());
                     }
                     else {
                         $tokenHandler->setCookie($tokenKey);
@@ -245,7 +251,8 @@ class Client
                 $response = Request::post($url, $this->getHeaders(), null, $user, $password);
 
                 if (isset($response->body->data)
-                    && isset($response->body->data->AuthorizationBearerToken)
+                    && isset($response->body->data->token_param_name)
+                    && isset($response->body->data->{$response->body->data->token_param_name})
                     && isset($response->body->data->expire_in)) {
                     $cookieVal = uniqid(self::SESSION_COOKIE_VALUE_PFX);
                     $tokenHandler = new $tokenHandler($cookieVal);
@@ -255,8 +262,7 @@ class Client
                         $tokenHandler->setCookie($tokenKey, $cookieVal, $expire);
                         $tokenHandler->keepToken(new Token(json_decode(json_encode($response->body->data), true)));
                     }
-
-                    $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Bearer ' . $response->body->data->AuthorizationBearerToken);
+                    $this->addBearerTokenHeader($response->body->data->{$response->body->data->token_param_name});
                 }
                 else {
                     throw new RuntimeException(
@@ -369,5 +375,11 @@ class Client
     : void
     {
         $this->platformVersion = $platformVersion;
+    }
+
+    public function addBearerTokenHeader(string $token)
+    : void
+    {
+        $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Bearer '.$token);
     }
 }
