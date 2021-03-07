@@ -149,7 +149,7 @@ class Client
                     break;
                 }
             }
-            if ($key) {
+            if ($key && !empty($this->tokenHandler)) {
                 $tokenHandler = $this->tokenHandler;
                 $tokenHandler = new $tokenHandler($key);
                 if ($tokenHandler instanceof TokenHandlerInterface) {
@@ -221,7 +221,8 @@ class Client
     {
         if (!$this->hasHeader(self::HEADER_PARAM_ACCESS_TOKEN) &&
             !$this->config->has(self::KEY_BEARER) &&
-            $this->config->has(self::KEY_TOKEN_URI)) {
+            $this->config->has(self::KEY_TOKEN_URI) &&
+            !empty($this->tokenHandler)) {
             $token = null;
             $tokenHandler = $this->tokenHandler;
             $this->countTokenRequestNumber++;
@@ -354,7 +355,7 @@ class Client
     public function getToken(string $tokenKey)
     : Token
     {
-        if (isset($_COOKIE[$tokenKey])) {
+        if (isset($_COOKIE[$tokenKey]) && !empty($this->tokenHandler)) {
             $key = $_COOKIE[$tokenKey];
             $tokenHandler = $this->tokenHandler;
             $tokenHandler = new $tokenHandler($key);
