@@ -24,6 +24,7 @@ class Client
     const HEADER_PARAM_ACCESS_TOKEN = "Authorization";
     const HEADER_PARAM_USER_AGENT = "User-Agent";
     const HEADER_VALUE_JSON = "application/json";
+    const HEADER_VALUE_MULTIPART = "multipart/form-data";
     const HEADER_VALUE_USER_AGENT = "Ezpizee Web/1.0";
     const HEADER_PARAM_APP_NAME = "App-Name";
     const HEADER_PARAM_APP_VERSION = "App-Version";
