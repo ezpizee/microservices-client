@@ -52,7 +52,7 @@ class Client
      */
     private $host;
     private $method;
-    private $methods = ['get' => 'GET', 'post' => 'POST', 'delete' => 'DELETE', 'patch' => 'PATCH'];
+    private $methods = ['get' => 'GET', 'post' => 'POST', 'put' => 'PUT', 'delete' => 'DELETE', 'patch' => 'PATCH'];
     private $headers = [];
     private $body;
     private $tokenHandler = null;
@@ -300,7 +300,7 @@ class Client
     : Response
     {
         $this->method = $this->methods['put'];
-        $this->body = $body;
+        $this->body = json_encode($body);
         return $this->request($this->url($uri));
     }
 
@@ -308,7 +308,7 @@ class Client
     : Response
     {
         $this->method = $this->methods['delete'];
-        $this->body = $body;
+        $this->body = json_encode($body);
         return $this->request($this->url($uri));
     }
 
