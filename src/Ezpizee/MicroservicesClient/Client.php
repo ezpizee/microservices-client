@@ -288,7 +288,7 @@ class Client
         return $this->headers;
     }
 
-    public function post(string $uri, array $body)
+    public function post(string $uri, array $body = [])
     : Response
     {
         $this->method = $this->methods['post'];
@@ -296,7 +296,7 @@ class Client
         return $this->request($this->url($uri));
     }
 
-    public function put(string $uri, array $body)
+    public function put(string $uri, array $body = [])
     : Response
     {
         $this->method = $this->methods['put'];
