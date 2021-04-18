@@ -141,8 +141,13 @@ class Client
                 break;
         }
 
+        if ($this->hasHeader(self::HEADER_PARAM_ACCESS_TOKEN)) {
+            return $response;
+        }
+
         // if the request was a request to refresh the token
-        if ($this->refreshToken && $response->hasElement() && !empty($response->getData())) {
+        if (!empty($this->tokenHandler) &&
+            $this->refreshToken && $response->hasElement() && !empty($response->getData())) {
             $key = '';
             foreach ($_COOKIE as $k => $v) {
                 if (StringUtil::startsWith($v, 'ezpz_token_handler_')) {
@@ -161,7 +166,8 @@ class Client
 
         // if the request failed with invalid token,
         // then we go to get token and reissue the same request again
-        else if (empty($response->getData()) &&
+        else if (!empty($this->tokenHandler) &&
+            empty($response->getData()) &&
             $response->getCode() === ResponseCodes::CODE_ERROR_INVALID_TOKEN &&
             $response->getMessage() === ResponseCodes::MESSAGE_ERROR_INVALID_TOKEN) {
             if ($this->countTokenRequestNumber < 3) {
@@ -383,5 +389,11 @@ class Client
     : void
     {
         $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Bearer '.$token);
+    }
+
+    public function addBasicTokenHeader(string $user, string $pwd)
+    : void
+    {
+        $this->addHeader(self::HEADER_PARAM_ACCESS_TOKEN, 'Basic '.base64_encode($user.':'.$pwd));
     }
 }
