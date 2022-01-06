@@ -264,8 +264,7 @@ class Client
 
                 if (isset($response->body->data)
                     && isset($response->body->data->token_param_name)
-                    && isset($response->body->data->{$response->body->data->token_param_name})
-                    && isset($response->body->data->expire_in)) {
+                    && isset($response->body->data->{$response->body->data->token_param_name})) {
                     $cookieVal = uniqid(self::SESSION_COOKIE_VALUE_PFX);
                     $tokenHandler = new $tokenHandler($cookieVal);
                     if ($tokenHandler instanceof TokenHandlerInterface) {
