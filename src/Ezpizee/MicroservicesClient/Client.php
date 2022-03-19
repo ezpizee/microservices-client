@@ -69,6 +69,9 @@ class Client
             if ($config->has(self::KEY_BEARER)) {
                 $this->addAuthorizationHeader($config->get(self::KEY_BEARER));
             }
+            else if ($config->has(self::HEADER_PARAM_ACCESS_TOKEN)) {
+                $this->addAuthorizationHeader($config->get(self::HEADER_PARAM_ACCESS_TOKEN));
+            }
         }
         else {
             throw new RuntimeException('Invalid microservices config', 422);
